@@ -15,6 +15,8 @@
 # 각 항목은 PASS/FAIL 과 배점을 출력하고, 개별 실행 시 PASS면 exit 0, FAIL이면 exit 1
 
 set -u
+export LC_ALL=C
+export LANG=C
 
 TOTAL=0
 EARNED=0
