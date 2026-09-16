@@ -262,25 +262,54 @@ range_enforce_check() {
 # ---------------------------------------------------------------
 # 8) 정상 입출력 검사 (input -> print 로 값이 그대로 출력되는지)
 # ---------------------------------------------------------------
+# input_output_check() {
+#     local points=2
+#     ensure_binary
+#     if [[ ! -x "$BIN" ]]; then
+#         log_fail "input_output_check" "실행 파일 없음 (컴파일 실패)"
+#         add_result input_output_check $points 0
+#         return 1
+#     fi
+#     local out
+#     out=$(printf "42\n77.5\n" | timeout 5 "$BIN" 2>/dev/null)
+#     if grep -qE '42' <<<"$out" && grep -qE '77\.5' <<<"$out"; then
+#         log_pass "input_output_check" $points
+#         add_result input_output_check $points 1
+#         return 0
+#     else
+#         log_fail "input_output_check" "입력한 값이 출력에 그대로 반영되지 않음"
+#         add_result input_output_check $points 0
+#         return 1
+#     fi
+# }
+
+# ---------------------------------------------------------------
+# 8) 정상 입출력 검사 (input -> print 로 값이 그대로 출력되는지)
+# ---------------------------------------------------------------
 input_output_check() {
-    local points=2
-    ensure_binary
-    if [[ ! -x "$BIN" ]]; then
-        log_fail "input_output_check" "실행 파일 없음 (컴파일 실패)"
-        add_result input_output_check $points 0
-        return 1
-    fi
-    local out
-    out=$(printf "42\n77.5\n" | timeout 5 "$BIN" 2>/dev/null)
-    if grep -qE '42' <<<"$out" && grep -qE '77\.5' <<<"$out"; then
-        log_pass "input_output_check" $points
-        add_result input_output_check $points 1
-        return 0
-    else
-        log_fail "input_output_check" "입력한 값이 출력에 그대로 반영되지 않음"
-        add_result input_output_check $points 0
-        return 1
-    fi
+  local points=2
+  ensure_binary
+
+  if [[ ! -x "$BIN" ]]; then
+    log_fail "input_output_check" "실행 파일 없음 (컴파일 실패)"
+    add_result input_output_check $points 0
+    return 1
+  fi
+
+  local out
+  out=$(printf "42\n77.5\n" | timeout 5 "$BIN" 2>/dev/null)
+
+  # 42 포함 여부 확인
+  # 77.5, 77.50 등 소수점 뒤 0이 붙는 경우까지 유연하게 매칭 (77\.50*)
+  if grep -qE '\b42\b' <<<"$out" && grep -qE '77\.50*' <<<"$out"; then
+    log_pass "input_output_check" $points
+    add_result input_output_check $points 1
+    return 0
+  else
+    log_fail "input_output_check" "입력한 값이 출력에 그대로 반영되지 않음"
+    add_result input_output_check $points 0
+    return 1
+  fi
 }
 
 # ---------------------------------------------------------------
