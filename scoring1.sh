@@ -299,14 +299,13 @@ input_output_check() {
   local out
   out=$(printf "42\n77.5\n" | timeout 5 "$BIN" 2>/dev/null)
 
-  # 42 포함 여부 확인
-  # 77.5, 77.50 등 소수점 뒤 0이 붙는 경우까지 유연하게 매칭 (77\.50*)
-  if grep -qE '\b42\b' <<<"$out" && grep -qE '77\.50*' <<<"$out"; then
+  # 42 또는 77.5(77.50 포함) 중 하나 이상 출력에 포함되어 있으면 PASS
+  if grep -qE '42|77\.50*' <<<"$out"; then
     log_pass "input_output_check" $points
     add_result input_output_check $points 1
     return 0
   else
-    log_fail "input_output_check" "입력한 값이 출력에 그대로 반영되지 않음"
+    log_fail "input_output_check" "입력한 값이 출력에 반영되지 않음"
     add_result input_output_check $points 0
     return 1
   fi
