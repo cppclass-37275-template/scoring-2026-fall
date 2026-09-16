@@ -43,27 +43,6 @@ find_header() {
 HEADER_FILE=$(find_header)
 
 # 헤더에서 네임스페이스 이름 자동 추출 (이름+학번 형태: 영문/한글 뒤에 숫자)
-# extract_namespace() {
-#     grep -oE 'namespace[[:space:]]+[A-Za-z가-힣_][A-Za-z가-힣_0-9]*[0-9]+[[:space:]]*\{' "$HEADER_FILE" 2>/dev/null \
-#         | head -n1 \
-#         | sed -E 's/namespace[[:space:]]+([A-Za-z가-힣_0-9]+)[[:space:]]*\{/\1/'
-# }
-# extract_namespace() {
-#   # namespace 키워드 뒤에 나오는 첫 단어(이름+학번)를 추출
-#   grep -oE 'namespace[[:space:]]+[A-Za-z0-9가-힣_]+' "$HEADER_FILE" 2>/dev/null \
-#     | head -n1 \
-#     | awk '{print $2}'
-# }
-# extract_namespace() {
-#   # namespace 키워드 뒤에 영문/한글/숫자가 섞인 식별자를 추출
-#   local ns
-#   ns=$(grep -oE 'namespace[[:space:]]+[A-Za-z0-9가-힣_]+' "$HEADER_FILE" 2>/dev/null | head -n1 | awk '{print $2}')
-  
-#   # 추출된 이름에 숫자가 포함되어 있는지 검증 (학번 포함 여부)
-#   if [[ "$ns" =~ [0-9]+ ]]; then
-#     echo "$ns"
-#   fi
-# }
 extract_namespace() {
   if [[ -z "$HEADER_FILE" || ! -f "$HEADER_FILE" ]]; then
     return
@@ -265,30 +244,6 @@ range_enforce_check() {
 # ---------------------------------------------------------------
 # 8) 정상 입출력 검사 (input -> print 로 값이 그대로 출력되는지)
 # ---------------------------------------------------------------
-# input_output_check() {
-#     local points=2
-#     ensure_binary
-#     if [[ ! -x "$BIN" ]]; then
-#         log_fail "input_output_check" "실행 파일 없음 (컴파일 실패)"
-#         add_result input_output_check $points 0
-#         return 1
-#     fi
-#     local out
-#     out=$(printf "42\n77.5\n" | timeout 5 "$BIN" 2>/dev/null)
-#     if grep -qE '42' <<<"$out" && grep -qE '77\.5' <<<"$out"; then
-#         log_pass "input_output_check" $points
-#         add_result input_output_check $points 1
-#         return 0
-#     else
-#         log_fail "input_output_check" "입력한 값이 출력에 그대로 반영되지 않음"
-#         add_result input_output_check $points 0
-#         return 1
-#     fi
-# }
-
-# ---------------------------------------------------------------
-# 8) 정상 입출력 검사 (input -> print 로 값이 그대로 출력되는지)
-# ---------------------------------------------------------------
 input_output_check() {
   local points=2
   ensure_binary
@@ -302,7 +257,6 @@ input_output_check() {
   local out
   out=$(printf "1\n1\n" | timeout 5 "$BIN" 2>/dev/null)
 
-  # 42 또는 77.5(77.50 포함) 중 하나 이상 출력에 포함되어 있으면 PASS
   if grep -qE '1|1*' <<<"$out"; then
     log_pass "input_output_check" $points
     add_result input_output_check $points 1
@@ -314,9 +268,6 @@ input_output_check() {
   fi
 }
 
-# ---------------------------------------------------------------
-# 9) set 함수 반영 검사 (Object2 출력에 코드로 지정한 값이 보이는지)
-# ---------------------------------------------------------------
 # ---------------------------------------------------------------
 # 9) set 함수 반영 검사 (Object2 출력에 코드로 지정한 값이 보이는지)
 # ---------------------------------------------------------------
@@ -347,28 +298,8 @@ setter_check() {
 }
 
 # ---------------------------------------------------------------
-# 10) 객체 비교 로직 검사 (obj1 != obj2 인 상황에서 '같지 않음'을 출력하는지)
+# 10) 객체 비교 로직 검사 
 # ---------------------------------------------------------------
-# compare_check() {
-#     local points=1
-#     ensure_binary
-#     if [[ ! -x "$BIN" ]]; then
-#         log_fail "compare_check" "실행 파일 없음 (컴파일 실패)"
-#         add_result compare_check $points 0
-#         return 1
-#     fi
-#     local out
-#     out=$(printf "1\n0\n" | timeout 5 "$BIN" 2>/dev/null)
-#     if grep -qiE 'not[[:space:]]*equal|다르|같지[[:space:]]*않|false|불일치' <<<"$out"; then
-#         log_pass "compare_check" $points
-#         add_result compare_check $points 1
-#         return 0
-#     else
-#         log_fail "compare_check" "obj1/obj2 비교 결과(같지 않음)가 출력에서 확인되지 않음"
-#         add_result compare_check $points 0
-#         return 1
-#     fi
-# }
 compare_check() {
     local points=1
     ensure_binary
