@@ -41,12 +41,27 @@ find_header() {
 HEADER_FILE=$(find_header)
 
 # 헤더에서 네임스페이스 이름 자동 추출 (이름+학번 형태: 영문/한글 뒤에 숫자)
+# extract_namespace() {
+#     grep -oE 'namespace[[:space:]]+[A-Za-z가-힣_][A-Za-z가-힣_0-9]*[0-9]+[[:space:]]*\{' "$HEADER_FILE" 2>/dev/null \
+#         | head -n1 \
+#         | sed -E 's/namespace[[:space:]]+([A-Za-z가-힣_0-9]+)[[:space:]]*\{/\1/'
+# }
+# extract_namespace() {
+#   # namespace 키워드 뒤에 나오는 첫 단어(이름+학번)를 추출
+#   grep -oE 'namespace[[:space:]]+[A-Za-z0-9가-힣_]+' "$HEADER_FILE" 2>/dev/null \
+#     | head -n1 \
+#     | awk '{print $2}'
+# }
 extract_namespace() {
-    grep -oE 'namespace[[:space:]]+[A-Za-z가-힣_][A-Za-z가-힣_0-9]*[0-9]+[[:space:]]*\{' "$HEADER_FILE" 2>/dev/null \
-        | head -n1 \
-        | sed -E 's/namespace[[:space:]]+([A-Za-z가-힣_0-9]+)[[:space:]]*\{/\1/'
+  # namespace 키워드 뒤에 영문/한글/숫자가 섞인 식별자를 추출
+  local ns
+  ns=$(grep -oE 'namespace[[:space:]]+[A-Za-z0-9가-힣_]+' "$HEADER_FILE" 2>/dev/null | head -n1 | awk '{print $2}')
+  
+  # 추출된 이름에 숫자가 포함되어 있는지 검증 (학번 포함 여부)
+  if [[ "$ns" =~ [0-9]+ ]]; then
+    echo "$ns"
+  fi
 }
-
 NAMESPACE=$(extract_namespace)
 
 add_result() {
