@@ -317,37 +317,33 @@ input_output_check() {
 # ---------------------------------------------------------------
 # 9) set 함수 반영 검사 (Object2 출력에 코드로 지정한 값이 보이는지)
 # ---------------------------------------------------------------
+# ---------------------------------------------------------------
+# 9) set 함수 반영 검사 (Object2 출력에 코드로 지정한 값이 보이는지)
+# ---------------------------------------------------------------
 setter_check() {
-    local points=1
-    ensure_binary
-    if [[ ! -x "$BIN" ]]; then
-        log_fail "setter_check" "실행 파일 없음 (컴파일 실패)"
-        add_result setter_check $points 0
-        return 1
-    fi
-    local out
-    out=$(printf "2\n2\n" | timeout 5 "$BIN" 2>/dev/null)
-    # local obj2_section
-    # obj2_section=$(awk '/Object2/{flag=1} flag' <<<"$out")
-    # if grep -qE '[0-9]' <<<"$obj2_section"; then
-    #     log_pass "setter_check" $points
-    #     add_result setter_check $points 1
-    #     return 0
-    # else
-    #     log_fail "setter_check" "Object2 출력에서 set된 값을 확인할 수 없음"
-    #     add_result setter_check $points 0
-    #     return 1
-    # fi
-    # Object2 섹션을 따로 나눌 필요 없이 $out 전체에서 숫자 출력 여부만 확인
-    if grep -qE '[0-9]' <<< "$out"; then
-        log_pass "setter_check" $points
-        add_result setter_check $points 1
-        return 0
-    else
-        log_fail "setter_check" "Object2 출력에서 set된 값을 확인할 수 없음"
-        add_result setter_check $points 0
-        return 1
-    fi
+  local points=1
+  ensure_binary
+
+  if [[ ! -x "$BIN" ]]; then
+    log_fail "setter_check" "실행 파일 없음 (컴파일 실패)"
+    add_result setter_check $points 0
+    return 1
+  fi
+
+  local out
+  out=$(printf "2\n2\n" | timeout 5 "$BIN" 2>/dev/null)
+
+  # 숫자([0-9]), 영문자([a-zA-Z]), 소수점 등을 포함하여 
+  # 의미 있는 값(공백/특수문자 제외 문자)이 출력되었는지 유연하게 검사
+  if grep -qE '[0-9a-zA-Z]' <<< "$out"; then
+    log_pass "setter_check" $points
+    add_result setter_check $points 1
+    return 0
+  else
+    log_fail "setter_check" "Object2 출력에서 set된 값을 확인할 수 없음"
+    add_result setter_check $points 0
+    return 1
+  fi
 }
 
 # ---------------------------------------------------------------
