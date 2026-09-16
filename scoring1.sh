@@ -52,16 +52,29 @@ HEADER_FILE=$(find_header)
 #     | head -n1 \
 #     | awk '{print $2}'
 # }
-extract_namespace() {
-  # namespace 키워드 뒤에 영문/한글/숫자가 섞인 식별자를 추출
-  local ns
-  ns=$(grep -oE 'namespace[[:space:]]+[A-Za-z0-9가-힣_]+' "$HEADER_FILE" 2>/dev/null | head -n1 | awk '{print $2}')
+# extract_namespace() {
+#   # namespace 키워드 뒤에 영문/한글/숫자가 섞인 식별자를 추출
+#   local ns
+#   ns=$(grep -oE 'namespace[[:space:]]+[A-Za-z0-9가-힣_]+' "$HEADER_FILE" 2>/dev/null | head -n1 | awk '{print $2}')
   
-  # 추출된 이름에 숫자가 포함되어 있는지 검증 (학번 포함 여부)
-  if [[ "$ns" =~ [0-9]+ ]]; then
-    echo "$ns"
+#   # 추출된 이름에 숫자가 포함되어 있는지 검증 (학번 포함 여부)
+#   if [[ "$ns" =~ [0-9]+ ]]; then
+#     echo "$ns"
+#   fi
+# }
+extract_namespace() {
+  if [[ -z "$HEADER_FILE" || ! -f "$HEADER_FILE" ]]; then
+    return
   fi
+  
+  # 주석(// ...)을 제외하고 namespace 선언 추출
+  grep -v '^[[:space:]]*//' "$HEADER_FILE" \
+    | grep -oE 'namespace[[:space:]]+[A-Za-z0-9가-힣_]+' \
+    | head -n1 \
+    | awk '{print $2}'
 }
+
+
 NAMESPACE=$(extract_namespace)
 
 add_result() {
