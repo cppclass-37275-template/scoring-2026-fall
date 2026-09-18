@@ -98,7 +98,9 @@ using_header_check() {
         add_result using_header_check $points 0
         return 1
     fi
-    if grep -qE 'using[[:space:]]+namespace' "$HEADER_FILE"; then
+
+    # 주석(//)으로 시작하거나 // 뒤에 using namespace가 오는 경우를 제외하고 검사
+    if grep -v '^[[:space:]]*//' "$HEADER_FILE" | grep -qE '([^/]|[^/]/)[[:space:]]*using[[:space:]]+namespace'; then
         log_fail "using_header_check" "헤더 파일에 using 지시자 사용 금지"
         add_result using_header_check $points 0
         return 1
@@ -111,27 +113,27 @@ using_header_check() {
 
 # ---------------------------------------------------------------
 # 3) main.cpp의 using 지시자가 전역이 아닌 블록 안에서 사용되는지 검사
-#    (휴리스틱: using namespace 등장 이전에 '{' 가 먼저 나오고,
-#     그 줄이 std:: 없이 전역 스코프(함수 밖)에 있지 않은지 확인)
 # ---------------------------------------------------------------
 using_source_check() {
     local points=2
-    if ! grep -qE 'using[[:space:]]+namespace' main.cpp; then
+
+    # 주석(//) 처리되지 않은 유효한 using namespace 문장이 있는지 확인
+    if ! grep -v '^[[:space:]]*//' main.cpp | grep -qE '([^/]|[^/]/)[[:space:]]*using[[:space:]]+namespace'; then
         log_fail "using_source_check" "main.cpp에서 using 지시자를 찾을 수 없음"
         add_result using_source_check $points 0
         return 1
     fi
 
-    # using namespace 가 등장하는 줄번호
+    # 주석을 제외한 실제 using namespace가 등장하는 첫 번째 줄번호 추출
     local line_no
-    line_no=$(grep -nE 'using[[:space:]]+namespace' main.cpp | head -n1 | cut -d: -f1)
+    line_no=$(grep -nE '^[[:space:]]*[^/]*using[[:space:]]+namespace' main.cpp | head -n1 | cut -d: -f1)
 
     # 그 줄 이전까지 여는 중괄호 개수 - 닫는 중괄호 개수
     local before
     before=$(head -n $((line_no - 1)) main.cpp)
     local open_count close_count depth
-    open_count=$(grep -o '{' <<<"$before" | wc -l)
-    close_count=$(grep -o '}' <<<"$before" | wc -l)
+    open_count=$(grep -o '{' <<< "$before" | wc -l)
+    close_count=$(grep -o '}' <<< "$before" | wc -l)
     depth=$((open_count - close_count))
 
     if [[ $depth -ge 1 ]]; then
@@ -144,6 +146,8 @@ using_source_check() {
         return 1
     fi
 }
+
+
 
 # ---------------------------------------------------------------
 # 4) private 멤버변수 2개 이상 검사
