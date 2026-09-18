@@ -5,7 +5,6 @@
 ```
 curl -fsSL https://raw.githubusercontent.com/cppclass-37275-template/scoring/main/scoring.sh -o scoring.sh
 chmod +x scoring.sh
-g++ main.cpp -o main
 ./scoring.sh  
 ```
 
