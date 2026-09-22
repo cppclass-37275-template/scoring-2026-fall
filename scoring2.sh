@@ -296,7 +296,7 @@ check_class2_private_member() {
 
     # 1. 클래스2 헤더 내에 클래스1 타입이 쓰였는지 확인 (값/포인터/참조 모두 허용)
     echo "$stripped" | grep -qP "\b${cls1}\b" \
-        || fail "$cls2 에 $cls1 형 멤버변수가 없습니다 ($H2)"
+        || fail "$cls2에 $cls1형 멤버변수가 없습니다 ($H2)"
 
     # 2. default private 및 private: 영역의 멤버변수 선언 추출
     private_content=$(echo "$stripped" | awk -v cls="$cls2" '
@@ -338,9 +338,9 @@ check_class2_private_member() {
 
     member_count=$(echo "$private_content" | grep -cP '\S' || true)
 
-    [ "$member_count" -lt 2 ] && fail "$cls2 의 private 멤버변수가 2개 미만입니다 (클래스1형 + 기타 1개 이상 필요, 현재: ${member_count}개)"
+    [ "$member_count" -lt 2 ] && fail "$cls2의 private 멤버변수가 2개 미만입니다 ($cls1형 + 기타 1개 이상 필요, 현재: ${member_count}개)"
 
-    pass "$cls2 의 private 멤버변수 확인됨 ($cls1 형 포함 ${member_count}개)"
+    pass "$cls2의 private 멤버변수 확인됨 ($cls1형 포함 ${member_count}개)"
 }
 
 check_class2_print() {
@@ -348,8 +348,8 @@ check_class2_print() {
     local stripped
     stripped=$(strip_comments "$H2")
     echo "$stripped" | grep -qP '\bprint\s*\([^)]*\)' \
-        || fail "클래스2 print 함수를 찾을 수 없습니다"
-    pass "클래스2 print 함수 확인됨"
+        || fail "$cls2 print 함수를 찾을 수 없습니다"
+    pass "$cls2 print 함수 확인됨"
 }
 
 check_class2_get_set() {
@@ -358,8 +358,8 @@ check_class2_get_set() {
     stripped=$(strip_comments "$H2")
     cls1=$(detect_class_name "$H1")
     echo "$stripped" | grep -qP "${cls1}\s*&\s*get\w*\s*\(" \
-        || fail "클래스1형 객체를 참조형식으로 반환하는 접근함수를 찾을 수 없습니다"
-    pass "클래스1형 객체 참조형 접근함수 확인됨"
+        || fail "$cls1형 객체를 참조형식으로 반환하는 접근함수를 찾을 수 없습니다"
+    pass "$cls1형 객체 참조형 접근함수 확인됨"
 }
 
 # ------------------------------------------------------------------------
