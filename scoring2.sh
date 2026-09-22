@@ -288,15 +288,25 @@ check_class2_constructor() {
 
 check_class2_private_member() {
     require_files "$H1" "$H2"
-    local stripped cls1 private_section member_count
+    local stripped cls1 cls2 private_content member_count
+
     stripped=$(strip_comments "$H2")
     cls1=$(detect_class_name "$H1")
+    cls2=$(detect_class_name "$H2")
+
+    # 1. 클래스2 헤더 내에 클래스1 타입의 멤버변수가 존재하는지 확인
     echo "$stripped" | grep -qP "\b${cls1}\b\s+\w+\s*;" \
-        || fail "클래스 $cls2에 $cls1형 멤버변수가 없습니다"
-    private_section=$(echo "$stripped" | sed -n '/private/,/public/p')
-    member_count=$(echo "$private_section" | grep -cP '^\s*[A-Za-z_][\w:<>]*\s+\w+\s*;')
-    [ "$member_count" -lt 2 ] && fail "클래스 $cls2 private 멤버변수가 2개 미만입니다 (클래스 $cls1형 + 기타 1개 이상 필요, 현재: $member_count)"
-    pass "클래스 $cls2 private 멤버변수 확인됨 (클래스1형 포함 ${member_count}개)"
+        || fail "$cls2 에 $cls1 형 멤버변수가 없습니다 ($H2)"
+
+    # 2. private: 선언 영역 추출 (private: 이후부터 다음 access specifier 또는 클래스 끝 '};' 전까지)
+    private_content=$(echo "$stripped" | awk '/private\s*:/ {p=1; next} /(public|protected)\s*:/ {p=0} p' | grep -v '^\s*$')
+
+    # 3. private 영역 내 세미콜론(;)으로 끝나는 멤버변수 개수 집계 (함수 선언 제외)
+    member_count=$(echo "$private_content" | grep -vP '\(' | grep -cP '\w+\s*;' || true)
+
+    [ "$member_count" -lt 2 ] && fail "$cls2 의 private 멤버변수가 2개 미만입니다 (클래스1형 + 기타 1개 이상 필요, 현재: ${member_count}개)"
+
+    pass "$cls2 의 private 멤버변수 확인됨 ($cls1 형 포함 ${member_count}개)"
 }
 
 check_class2_print() {
