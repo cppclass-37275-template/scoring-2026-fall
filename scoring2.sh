@@ -55,7 +55,7 @@ strip_comments() {
 # 클래스1.h 에서 네임스페이스 이름 탐지 (std 제외, 첫 번째 매치)
 detect_namespace() {
     # grep -oP 'namespace\s+\K[A-Za-z_][A-Za-z0-9_]*(?=\s*\{)' "$H1" 2>/dev/null | grep -v '^std$' | head -1
-    grep -oE 'namespace[[:space:]]+[A-Za-z가-힣_][A-Za-z가-힣_0-9]*[0-9]+[[:space:]]*\{' "$HEADER_FILE" 2>/dev/null \
+    grep -oE 'namespace[[:space:]]+[A-Za-z가-힣_][A-Za-z가-힣_0-9]*[0-9]+[[:space:]]*\{' "$H1" 2>/dev/null \
         | head -n1 \
         | sed -E 's/namespace[[:space:]]+([A-Za-z가-힣_0-9]+)[[:space:]]*\{/\1/'
 }
@@ -183,8 +183,8 @@ check_namespace() {
     [ -z "$ns" ] && fail "네임스페이스를 찾을 수 없습니다 (이름+학번 형식 필요)"
     echo "$ns" | grep -qP '^[A-Za-z가-힣]+[0-9]{4,}$' \
         || fail "네임스페이스 이름이 '이름+학번' 형식이 아닙니다: $ns"
-    grep -q "namespace[[:space:]]\+$ns" "$H1" || fail "클래스1.h 에 네임스페이스가 적용되지 않았습니다"
-    grep -q "namespace[[:space:]]\+$ns" "$H2" || fail "클래스2.h 에 네임스페이스가 적용되지 않았습니다"
+    grep -qE "namespace[[:space:]]\+$ns" "$H1" || fail "클래스1.h 에 네임스페이스가 적용되지 않았습니다"
+    grep -qE "namespace[[:space:]]\+$ns" "$H2" || fail "클래스2.h 에 네임스페이스가 적용되지 않았습니다"
     pass "네임스페이스 '$ns' 확인됨"
 }
 
