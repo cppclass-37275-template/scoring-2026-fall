@@ -182,8 +182,8 @@ check_namespace() {
     [ -z "$ns" ] && fail "네임스페이스를 찾을 수 없습니다 (이름+학번 형식 필요)"
     echo "$ns" | grep -qP '^[A-Za-z가-힣]+[0-9]{4,}$' \
         || fail "네임스페이스 이름이 '이름+학번' 형식이 아닙니다: $ns"
-    grep -qE "namespace[[:space:]]\+$ns" "$H1" || fail "클래스1.h 에 네임스페이스가 적용되지 않았습니다"
-    grep -qE "namespace[[:space:]]\+$ns" "$H2" || fail "클래스2.h 에 네임스페이스가 적용되지 않았습니다"
+    grep -qE "namespace[[:space:]]+$ns" "$H1" || fail "$H1 에 네임스페이스가 적용되지 않았습니다"
+    grep -qE "namespace[[:space:]]+$ns" "$H2" || fail "$H2 에 네임스페이스가 적용되지 않았습니다"
     pass "네임스페이스 '$ns' 확인됨"
 }
 
