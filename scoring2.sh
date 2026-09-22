@@ -294,15 +294,46 @@ check_class2_private_member() {
     cls1=$(detect_class_name "$H1")
     cls2=$(detect_class_name "$H2")
 
-    # 1. 클래스2 헤더 내에 클래스1 타입의 멤버변수가 존재하는지 확인
-    echo "$stripped" | grep -qP "\b${cls1}\b\s+\w+\s*;" \
+    # 1. 클래스2 헤더 내에 클래스1 타입이 쓰였는지 확인 (값/포인터/참조 모두 허용)
+    echo "$stripped" | grep -qP "\b${cls1}\b" \
         || fail "$cls2 에 $cls1 형 멤버변수가 없습니다 ($H2)"
 
-    # 2. default private 및 private: 영역 추출 (awk 닫는 따옴표 수정 완료)
-    private_content=$(echo "$stripped" | awk '/class\s+'"$cls2"'/,/}/ { if (/class\s+'"$cls2"'/) {p=1; next} if (/(public|protected)\s*:/) {p=0} if (/private\s*:/) {p=1; next} if (p) print }' | grep -v '^\s*$')
+    # 2. private: 영역의, 클래스 몸체 "바로 아래" 레벨에 있는 멤버변수 선언만 추출.
+    #    - awk 정규식은 PCRE의 \s를 지원하지 않으므로 [[:space:]]를 사용해야 함
+    #    - 네임스페이스로 감싸져 있으면 중괄호 depth가 그만큼 밀리므로,
+    #      "클래스가 시작되는 시점의 depth+1"을 기준선(class_depth)으로 동적으로 잡아
+    #      멤버함수 몸체 안의 문장(세미콜론 포함)을 멤버변수로 오인하지 않도록 함
+    private_content=$(echo "$stripped" | awk -v cls="$cls2" '
+        BEGIN { depth = 0; started = 0; inpriv = 0; class_depth = -1; outer_depth = -1 }
+        {
+            d_before = depth
+            nopen = gsub(/\{/, "{", $0)
+            nclose = gsub(/\}/, "}", $0)
+            depth += nopen - nclose
 
-    # 3. private 영역 내 세미콜론(;)으로 끝나는 멤버변수 개수 집계 (함수 선언 제외)
-    member_count=$(echo "$private_content" | grep -vP '\(' | grep -cP ';\s*$' || true)
+            if (!started) {
+                if ($0 ~ ("class[[:space:]]+" cls)) {
+                    started = 1
+                    outer_depth = d_before
+                    class_depth = d_before + 1
+                }
+                next
+            }
+
+            if (d_before == class_depth) {
+                if ($0 ~ "private[[:space:]]*:") { inpriv = 1; next }
+                if ($0 ~ "(public|protected)[[:space:]]*:") { inpriv = 0; next }
+            }
+
+            if (inpriv && d_before == class_depth && $0 !~ /\{/ && $0 ~ /;/) {
+                print $0
+            }
+
+            if (started && depth <= outer_depth) exit
+        }
+    ')
+
+    member_count=$(echo "$private_content" | grep -cP '\S' || true)
 
     [ "$member_count" -lt 2 ] && fail "$cls2 의 private 멤버변수가 2개 미만입니다 (클래스1형 + 기타 1개 이상 필요, 현재: ${member_count}개)"
 
