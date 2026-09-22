@@ -118,22 +118,22 @@ using_header_check() {
 using_source_check() {
     local points=2
 
-    # 주석(//) 처리되지 않은 유효한 using namespace 문장이 있는지 확인
-    if ! grep -v '^[[:space:]]*//' main.cpp | grep -qE '([^/]|[^/]/)[[:space:]]*using[[:space:]]+namespace'; then
+    # 1. 주석(//...)을 먼저 완전히 제거한 클린 코드 생성
+    local clean_code
+    clean_code=$(sed 's/\/\/.*//' main.cpp)
+
+    # 2. 주석이 제거된 코드에서 using namespace 유무 확인
+    if ! echo "$clean_code" | grep -qE '[[:space:]]*using[[:space:]]+namespace'; then
         log_fail "using_source_check" "main.cpp에서 using 지시자를 찾을 수 없음"
         add_result using_source_check $points 0
         return 1
     fi
 
-    # 주석(//...)을 완전히 제거한 임시 텍스트 생성 후 줄번호/깊이 계산
-    local clean_code
-    clean_code=$(sed 's/\/\/.*//' main.cpp)
-
-    # 주석이 제거된 코드에서 실제 using namespace가 등장하는 첫 줄번호 추출
+    # 3. 실제 using namespace가 등장하는 첫 줄번호 추출
     local line_no
     line_no=$(echo "$clean_code" | grep -nE '[[:space:]]*using[[:space:]]+namespace' | head -n1 | cut -d: -f1)
 
-    # 해당 줄 이전까지의 여는 중괄호와 닫는 중괄호 개수 비교
+    # 4. 해당 줄 이전까지의 여는 중괄호와 닫는 중괄호 개수 비교 (블록 내부 검사)
     local before
     before=$(echo "$clean_code" | head -n $((line_no - 1)))
 
@@ -152,7 +152,6 @@ using_source_check() {
         return 1
     fi
 }
-
 
 # ---------------------------------------------------------------
 # 4) private 멤버변수 2개 이상 검사
