@@ -280,10 +280,10 @@ check_class2_constructor() {
     local stripped cls2
     stripped=$(strip_comments "$H2")
     cls2=$(detect_class_name "$H2")
-    [ -z "$cls2" ] && fail "클래스2를 찾을 수 없습니다"
+    [ -z "$cls2" ] && fail "class $cls2 찾을 수 없습니다"
     echo "$stripped" | grep -qP "(?<!~)\b${cls2}\s*\([^)]*\)\s*(:|\{)" \
-        || fail "클래스2 생성자를 찾을 수 없습니다 (클래스: $cls2)"
-    pass "클래스2 생성자 확인됨 (클래스: $cls2)"
+        || fail "$cls2 생성자를 찾을 수 없습니다"
+    pass "$cls2 생성자 확인됨"
 }
 
 check_class2_private_member() {
@@ -292,11 +292,11 @@ check_class2_private_member() {
     stripped=$(strip_comments "$H2")
     cls1=$(detect_class_name "$H1")
     echo "$stripped" | grep -qP "\b${cls1}\b\s+\w+\s*;" \
-        || fail "클래스2에 클래스1형 멤버변수가 없습니다"
+        || fail "클래스 $cls2에 $cls1형 멤버변수가 없습니다"
     private_section=$(echo "$stripped" | sed -n '/private/,/public/p')
     member_count=$(echo "$private_section" | grep -cP '^\s*[A-Za-z_][\w:<>]*\s+\w+\s*;')
-    [ "$member_count" -lt 2 ] && fail "클래스2 private 멤버변수가 2개 미만입니다 (클래스1형 + 기타 1개 이상 필요, 현재: $member_count)"
-    pass "클래스2 private 멤버변수 확인됨 (클래스1형 포함 ${member_count}개)"
+    [ "$member_count" -lt 2 ] && fail "클래스 $cls2 private 멤버변수가 2개 미만입니다 (클래스 $cls1형 + 기타 1개 이상 필요, 현재: $member_count)"
+    pass "클래스 $cls2 private 멤버변수 확인됨 (클래스1형 포함 ${member_count}개)"
 }
 
 check_class2_print() {
