@@ -54,8 +54,10 @@ strip_comments() {
 
 # 클래스1.h 에서 네임스페이스 이름 탐지 (std 제외, 첫 번째 매치)
 detect_namespace() {
-    grep -oP 'namespace\s+\K[A-Za-z_][A-Za-z0-9_]*(?=\s*\{)' "$H1" 2>/dev/null | grep -v '^std$' | head -1
-}
+    # grep -oP 'namespace\s+\K[A-Za-z_][A-Za-z0-9_]*(?=\s*\{)' "$H1" 2>/dev/null | grep -v '^std$' | head -1
+    grep -oE 'namespace[[:space:]]+[A-Za-z가-힣_][A-Za-z가-힣_0-9]*[0-9]+[[:space:]]*\{' "$HEADER_FILE" 2>/dev/null \
+        | head -n1 \
+        | sed -E 's/namespace[[:space:]]+([A-Za-z가-힣_0-9]+)[[:space:]]*\{/\1/'}
 
 # 헤더파일에서 class 이름 탐지
 detect_class_name() {
