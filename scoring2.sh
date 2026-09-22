@@ -344,9 +344,13 @@ check_class2_private_member() {
 }
 
 check_class2_print() {
-    require_files "$H2"
-    local stripped
+    require_files "$H1" "$H2"
+    local stripped cls1 cls2
+
     stripped=$(strip_comments "$H2")
+    cls1=$(detect_class_name "$H1")
+    cls2=$(detect_class_name "$H2")  # <- 이 줄을 추가    
+
     echo "$stripped" | grep -qP '\bprint\s*\([^)]*\)' \
         || fail "$cls2 print 함수를 찾을 수 없습니다"
     pass "$cls2 print 함수 확인됨"
@@ -388,8 +392,8 @@ check_input_output() {
     out=$(gen_input 10 20 30 40 | timeout 5 "$bin" 2>&1)
     rm -f "$bin"
     line_count=$(echo "$out" | grep -cP '\S')
-    [ "$line_count" -lt 2 ] && fail "입력 후 두 객체의 출력 결과가 충분하지 않습니다 (출력 라인: $line_count)"
-    pass "입력연산자/출력연산자 동작 확인됨 (출력 라인: $line_count)"
+    [ "$line_count" -lt 2 ] && fail "입력 후 두 객체의 출력 결과가 충분하지 않습니다"
+    pass "입력연산자/출력연산자 동작 확인됨"
 }
 
 check_increment() {
@@ -398,8 +402,8 @@ check_increment() {
     out=$(gen_input 10 20 10 20 | timeout 5 "$bin" 2>&1)
     rm -f "$bin"
     lines=$(echo "$out" | grep -cP '\S')
-    [ "$lines" -lt 5 ] && fail "전위/후위 증가연산자 적용 후 출력이 부족합니다 (총 출력 라인: $lines, 5줄 이상 예상: 입력2줄+증가결과3줄)"
-    pass "전위/후위 증가연산자 출력 확인됨 (총 출력 라인: $lines) - 값 정확성은 표본 확인 권장"
+    [ "$lines" -lt 5 ] && fail "전위/후위 증가연산자 적용 후 출력이 부족합니다"
+    pass "전위/후위 증가연산자 출력 확인됨"
 }
 
 check_equality() {
@@ -429,7 +433,7 @@ check_plus() {
     rm -f "$bin"
     lines=$(echo "$out" | grep -cP '\S')
     [ "$lines" -lt 6 ] && fail "덧셈연산자(+) 결과 출력이 부족합니다 (총 출력 라인: $lines)"
-    pass "덧셈연산자(+) 결과 출력 확인됨 (총 출력 라인: $lines) - 값 정확성은 표본 확인 권장"
+    pass "덧셈연산자(+) 결과 출력 확인됨"
 }
 
 # ------------------------------------------------------------------------
