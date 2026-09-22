@@ -202,9 +202,9 @@ check_class1_constructor() {
     local stripped cls
     stripped=$(strip_comments "$H1")
     cls=$(detect_class_name "$H1")
-    [ -z "$cls" ] && fail "클래스1을 찾을 수 없습니다"
+    [ -z "$cls" ] && fail "$H1 에서 클래스 정의를 찾을 수 없습니다"
     echo "$stripped" | grep -qP "(?<!~)\b${cls}\s*\([^)]*\)\s*(:|\{)" \
-        || fail "클래스1 생성자를 찾을 수 없습니다 (클래스: $cls)"
+        || fail "클래스 생성자를 찾을 수 없습니다 (클래스: $cls)"
     pass "클래스1 생성자 확인됨 (클래스: $cls)"
 }
 
