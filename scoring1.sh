@@ -111,6 +111,7 @@ using_header_check() {
     fi
 }
 
+
 # ---------------------------------------------------------------
 # 3) main.cpp의 using 지시자가 전역이 아닌 블록 안에서 사용되는지 검사
 # ---------------------------------------------------------------
@@ -124,13 +125,18 @@ using_source_check() {
         return 1
     fi
 
-    # 주석을 제외한 실제 using namespace가 등장하는 첫 번째 줄번호 추출
-    local line_no
-    line_no=$(grep -nE '^[[:space:]]*[^/]*using[[:space:]]+namespace' main.cpp | head -n1 | cut -d: -f1)
+    # 주석(//...)을 완전히 제거한 임시 텍스트 생성 후 줄번호/깊이 계산
+    local clean_code
+    clean_code=$(sed 's/\/\/.*//' main.cpp)
 
-    # 그 줄 이전까지 여는 중괄호 개수 - 닫는 중괄호 개수
+    # 주석이 제거된 코드에서 실제 using namespace가 등장하는 첫 줄번호 추출
+    local line_no
+    line_no=$(echo "$clean_code" | grep -nE '[[:space:]]*using[[:space:]]+namespace' | head -n1 | cut -d: -f1)
+
+    # 해당 줄 이전까지의 여는 중괄호와 닫는 중괄호 개수 비교
     local before
-    before=$(head -n $((line_no - 1)) main.cpp)
+    before=$(echo "$clean_code" | head -n $((line_no - 1)))
+
     local open_count close_count depth
     open_count=$(grep -o '{' <<< "$before" | wc -l)
     close_count=$(grep -o '}' <<< "$before" | wc -l)
@@ -146,7 +152,6 @@ using_source_check() {
         return 1
     fi
 }
-
 
 
 # ---------------------------------------------------------------
