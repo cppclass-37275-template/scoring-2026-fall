@@ -3,7 +3,10 @@
 # scoring2.sh
 # 클래스1/클래스2 연산자 오버로딩 과제 자동채점 스크립트 (총 20점)
 #
-# 사용법: ./scoring2.sh <check_name>
+# 사용법:
+#   ./scoring2.sh                → 모든 체크를 순서대로 실행하고 총점 요약 출력
+#   ./scoring2.sh all            → 위와 동일
+#   ./scoring2.sh <check_name>   → 개별 체크 1개만 실행 (GitHub Classroom에서 사용)
 #
 # 대상 파일 (현재 디렉토리 기준):
 #   클래스1을 정의하는 헤더 (파일명은 학생마다 다름, 자동 탐지)
@@ -135,14 +138,24 @@ resolve_files() {
 }
 
 compile_or_fail() {
-    require_files "$H1" "$H2" "$MAIN"
+    # 주의: 이 함수는 항상 $(...)(명령치환/서브셸) 안에서 호출되므로
+    # 내부에서 fail()(exit)을 쓰면 상위 스크립트로 종료가 전파되지 않는다.
+    # 그래서 실패 시 "COMPILE_ERROR::<메시지>"를 표준출력으로 내보내고
+    # 0이 아닌 종료코드를 반환하며, 호출하는 쪽에서 그 종료코드를 보고
+    # 직접 fail()을 호출하도록 한다.
+    if [ -z "$H1" ] || [ ! -f "$H1" ] || [ -z "$H2" ] || [ ! -f "$H2" ] || [ -z "$MAIN" ] || [ ! -f "$MAIN" ]; then
+        echo "COMPILE_ERROR::필요한 파일을 찾을 수 없습니다 (헤더 2개 + main.cpp 필요)"
+        return 1
+    fi
     local bin="/tmp/scoring2_bin_$$"
     local err
     err=$(g++ -std=c++17 -Wall -o "$bin" "$MAIN" 2>&1)
     if [ $? -ne 0 ]; then
-        fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: $(echo "$err" | head -5)"
+        echo "COMPILE_ERROR::$(echo "$err" | head -5 | tr '\n' ' ')"
+        return 1
     fi
     echo "$bin"
+    return 0
 }
 
 # NUM_FIELDS * 2 개의 숫자를 입력으로 생성 (객체 2개분). 인자로 넘긴 값들을 순환 사용.
@@ -325,7 +338,7 @@ check_compile() {
 
 check_input_output() {
     local bin out line_count
-    bin=$(compile_or_fail)
+    bin=$(compile_or_fail) || fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: ${bin#COMPILE_ERROR::}"
     out=$(gen_input 10 20 30 40 | timeout 5 "$bin" 2>&1)
     rm -f "$bin"
     line_count=$(echo "$out" | grep -cP '\S')
@@ -335,7 +348,7 @@ check_input_output() {
 
 check_increment() {
     local bin out lines
-    bin=$(compile_or_fail)
+    bin=$(compile_or_fail) || fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: ${bin#COMPILE_ERROR::}"
     out=$(gen_input 10 20 10 20 | timeout 5 "$bin" 2>&1)
     rm -f "$bin"
     lines=$(echo "$out" | grep -cP '\S')
@@ -349,7 +362,7 @@ check_equality() {
     # 따라서 same/different 중 "정확히 어느 쪽"이 나오는지가 아니라,
     # same/different 출력 로직 자체가 존재/동작하는지를 확인합니다.
     local bin out_a out_b hit_a hit_b
-    bin=$(compile_or_fail)
+    bin=$(compile_or_fail) || fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: ${bin#COMPILE_ERROR::}"
     out_a=$(gen_input 10 20 10 20 | timeout 5 "$bin" 2>&1)
     out_b=$(gen_input 10 20 90 90 | timeout 5 "$bin" 2>&1)
     rm -f "$bin"
@@ -365,7 +378,7 @@ check_equality() {
 
 check_plus() {
     local bin out lines
-    bin=$(compile_or_fail)
+    bin=$(compile_or_fail) || fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: ${bin#COMPILE_ERROR::}"
     out=$(gen_input 10 20 30 40 | timeout 5 "$bin" 2>&1)
     rm -f "$bin"
     lines=$(echo "$out" | grep -cP '\S')
@@ -374,11 +387,76 @@ check_plus() {
 }
 
 # ------------------------------------------------------------------------
+# 전체 실행 (모든 체크를 한 번에 돌려서 요약/총점 출력)
+# ------------------------------------------------------------------------
+
+# name:points 형태로 순서와 배점을 정의 (scoring2-test.json 과 동일한 배점)
+ALL_CHECKS=(
+    "namespace_check:1"
+    "using_header_check:1"
+    "class1_constructor_check:1"
+    "class1_const_check:1"
+    "class1_prefix_increment_operator_check:1"
+    "class1_postfix_increment_operator_check:1"
+    "class1_friend_input_operator_check:1"
+    "class1_friend_output_operator_check:1"
+    "class1_friend_equality_operator_check:1"
+    "class1_friend_plus_operator_check:1"
+    "class2_constructor_check:1"
+    "class2_private_member_check:1"
+    "class2_print_check:1"
+    "class2_get_set_check:1"
+    "compile_check:2"
+    "input_output_check:1"
+    "increment_check:1"
+    "equlity_check:1"
+    "plus_check:1"
+)
+
+run_all() {
+    local script_path="$0"
+    local total=0
+    local max=0
+    local name pts entry out rc msg mark
+
+    printf '%-42s %4s  %s\n' "체크 항목" "배점" "결과"
+    printf '%s\n' "--------------------------------------------------------------------"
+
+    for entry in "${ALL_CHECKS[@]}"; do
+        name="${entry%%:*}"
+        pts="${entry##*:}"
+        max=$((max + pts))
+
+        # 각 체크는 exit로 종료되므로 하위 프로세스로 실행해 결과만 회수한다.
+        out=$(bash "$script_path" "$name" 2>&1)
+        rc=$?
+        msg="${out#PASS: }"; msg="${msg#FAIL: }"
+
+        if [ $rc -eq 0 ]; then
+            total=$((total + pts))
+            mark="[PASS]"
+        else
+            mark="[FAIL]"
+        fi
+        printf '%-42s %4s  %s %s\n' "$name" "$pts" "$mark" "$msg"
+    done
+
+    printf '%s\n' "--------------------------------------------------------------------"
+    echo "총점: ${total} / ${max}"
+
+    [ "$total" -eq "$max" ]
+}
+
+# ------------------------------------------------------------------------
 # 디스패치
 # ------------------------------------------------------------------------
 
-CHECK="${1:-}"
-[ -z "$CHECK" ] && { echo "사용법: $0 <check_name>"; exit 2; }
+CHECK="${1:-all}"
+
+if [ "$CHECK" = "all" ]; then
+    run_all
+    exit $?
+fi
 
 resolve_files
 
