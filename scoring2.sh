@@ -298,11 +298,11 @@ check_class2_private_member() {
     echo "$stripped" | grep -qP "\b${cls1}\b\s+\w+\s*;" \
         || fail "$cls2 에 $cls1 형 멤버변수가 없습니다 ($H2)"
 
-    # 2. private: 선언 영역 추출 (private: 이후부터 다음 access specifier 또는 클래스 끝 '};' 전까지)
-    private_content=$(echo "$stripped" | awk '/private\s*:/ {p=1; next} /(public|protected)\s*:/ {p=0} p' | grep -v '^\s*$')
+    # 2. default private 및 private: 영역 추출 (awk 닫는 따옴표 수정 완료)
+    private_content=$(echo "$stripped" | awk '/class\s+'"$cls2"'/,/}/ { if (/class\s+'"$cls2"'/) {p=1; next} if (/(public|protected)\s*:/) {p=0} if (/private\s*:/) {p=1; next} if (p) print }' | grep -v '^\s*$')
 
     # 3. private 영역 내 세미콜론(;)으로 끝나는 멤버변수 개수 집계 (함수 선언 제외)
-    member_count=$(echo "$private_content" | grep -vP '\(' | grep -cP '\w+\s*;' || true)
+    member_count=$(echo "$private_content" | grep -vP '\(' | grep -cP ';\s*$' || true)
 
     [ "$member_count" -lt 2 ] && fail "$cls2 의 private 멤버변수가 2개 미만입니다 (클래스1형 + 기타 1개 이상 필요, 현재: ${member_count}개)"
 
