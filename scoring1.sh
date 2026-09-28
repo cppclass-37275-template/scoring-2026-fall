@@ -118,38 +118,37 @@ using_header_check() {
 using_source_check() {
     local points=2
 
-    # 1. 주석(//...)을 제거한 클린 코드 생성
+    # 1. 주석(//...) 제거
     local clean_code
     clean_code=$(sed 's/\/\/.*//' main.cpp)
 
-    # 2. 주석이 제거된 코드에서 using namespace 유무 확인
+    # 2. 주석이 제거된 코드에서 using namespace가 있는지 확인
     if ! echo "$clean_code" | grep -qE '[[:space:]]*using[[:space:]]+namespace'; then
-        log_fail "using_source_check" "main.cpp에서 using 지시자를 찾을 수 없음"
-        add_result using_source_check $points 0
-        return 1
+        # using namespace를 아예 안 쓴 경우 (네임스페이스 지정자 std:: 등 사용) -> 통과
+        log_pass "using_source_check" $points
+        add_result using_source_check $points $points
+        return 0
     fi
 
-    # 3. 실제 using namespace가 등장하는 첫 줄번호 추출
+    # 3. using namespace가 등장하는 첫 번째 줄 번호 추출
     local line_no
     line_no=$(echo "$clean_code" | grep -nE '[[:space:]]*using[[:space:]]+namespace' | head -n1 | cut -d: -f1)
 
-    # 4. 해당 줄 이전까지의 여는 중괄호와 닫는 중괄호 개수 비교 (블록 내부 검사)
+    # 4. 해당 줄 이전까지의 중괄호({ }) 개수 비교 (블록 내부 깊이 검사)
     local before
     before=$(echo "$clean_code" | head -n $((line_no - 1)))
 
-    # grep 매칭 실패 시 0 처리 및 tr을 이용해 wc 공백 제거
     local open_count close_count depth
     open_count=$(echo "$before" | grep -o '{' | wc -l | tr -d ' ')
     close_count=$(echo "$before" | grep -o '}' | wc -l | tr -d ' ')
-    
+
     open_count=${open_count:-0}
     close_count=${close_count:-0}
-    
     depth=$((open_count - close_count))
 
+    # 5. depth가 1 이상이면 블록({}) 내부에서 사용된 것 -> 통과
     if [[ $depth -ge 1 ]]; then
         log_pass "using_source_check" $points
-        # 1 대신 배점($points)을 그대로 전달하여 만점 처리
         add_result using_source_check $points $points
         return 0
     else
