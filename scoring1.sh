@@ -118,7 +118,7 @@ using_header_check() {
 using_source_check() {
     local points=2
 
-    # 1. 주석(//...)을 먼저 완전히 제거한 클린 코드 생성
+    # 1. 주석(//...)을 제거한 클린 코드 생성
     local clean_code
     clean_code=$(sed 's/\/\/.*//' main.cpp)
 
@@ -137,14 +137,20 @@ using_source_check() {
     local before
     before=$(echo "$clean_code" | head -n $((line_no - 1)))
 
+    # grep 매칭 실패 시 0 처리 및 tr을 이용해 wc 공백 제거
     local open_count close_count depth
-    open_count=$(grep -o '{' <<< "$before" | wc -l)
-    close_count=$(grep -o '}' <<< "$before" | wc -l)
+    open_count=$(echo "$before" | grep -o '{' | wc -l | tr -d ' ')
+    close_count=$(echo "$before" | grep -o '}' | wc -l | tr -d ' ')
+    
+    open_count=${open_count:-0}
+    close_count=${close_count:-0}
+    
     depth=$((open_count - close_count))
 
     if [[ $depth -ge 1 ]]; then
         log_pass "using_source_check" $points
-        add_result using_source_check $points 1
+        # 1 대신 배점($points)을 그대로 전달하여 만점 처리
+        add_result using_source_check $points $points
         return 0
     else
         log_fail "using_source_check" "using 지시자가 블록({}) 밖(전역)에서 사용됨"
