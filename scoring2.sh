@@ -281,7 +281,9 @@ check_class2_constructor() {
     stripped=$(strip_comments "$H2")
     cls2=$(detect_class_name "$H2")
     [ -z "$cls2" ] && fail "class $cls2 찾을 수 없습니다"
-    echo "$stripped" | grep -qP "(?<!~)\b${cls2}\s*\([^)]*\)\s*(:|\{)" \
+    
+    # 중괄호 초기화(예: book{1,0}) 및 복잡한 기본 인자값이 포함된 생성자 선언/정의 감지
+    echo "$stripped" | grep -qP "(?<!~)\b${cls2}\s*\([\s\S]*?\)\s*(:|\{)" \
         || fail "$cls2 생성자를 찾을 수 없습니다"
     pass "$cls2 생성자 확인됨"
 }
