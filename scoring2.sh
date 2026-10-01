@@ -203,8 +203,11 @@ check_class1_constructor() {
     stripped=$(strip_comments "$H1")
     cls=$(detect_class_name "$H1")
     [ -z "$cls" ] && fail "$H1 에서 클래스 정의를 찾을 수 없습니다"
-    echo "$stripped" | grep -qP "(?<!~)\b${cls}\s*\([^)]*\)\s*(:|\{)" \
+
+    # perl -0777로 파일 전체를 하나의 문자열로 처리하여 multi-line 및 다양한 선언/정의 형태 감지
+    echo "$stripped" | perl -0777 -ne "exit 0 if /(?<!~)\b${cls}\s*\((?:[^()]+|\([^()]*\))*\)\s*(?::|\{|;|=)/s; exit 1;" \
         || fail "$cls 클래스 생성자를 찾을 수 없습니다"
+
     pass "$cls 생성자 확인됨"
 }
 
