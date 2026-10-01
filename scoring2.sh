@@ -419,8 +419,8 @@ check_equality() {
     # same/different 출력 로직 자체가 존재/동작하는지를 확인합니다.
     local bin out_a out_b hit_a hit_b
     bin=$(compile_or_fail) || fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: ${bin#COMPILE_ERROR::}"
-    out_a=$(gen_input 10 20 10 20 | timeout 5 "$bin" 2>&1)
-    out_b=$(gen_input 10 20 90 90 | timeout 5 "$bin" 2>&1)
+    out_a=$(gen_input 1 2 1 2 | timeout 5 "$bin" 2>&1)
+    out_b=$(gen_input 1 2 9 9 | timeout 5 "$bin" 2>&1)
     rm -f "$bin"
     hit_a=$(echo "$out_a" | grep -qiP '\b(same|different)\b' && echo 1 || echo 0)
     hit_b=$(echo "$out_b" | grep -qiP '\b(same|different)\b' && echo 1 || echo 0)
