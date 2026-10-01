@@ -435,7 +435,7 @@ check_equality() {
 check_plus() {
     local bin out lines
     bin=$(compile_or_fail) || fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: ${bin#COMPILE_ERROR::}"
-    out=$(gen_input 10 20 30 40 | timeout 5 "$bin" 2>&1)
+    out=$(gen_input 1 2 3 4 | timeout 5 "$bin" 2>&1)
     rm -f "$bin"
     lines=$(echo "$out" | grep -cP '\S')
     [ "$lines" -lt 6 ] && fail "덧셈연산자(+) 결과 출력이 부족합니다 (총 출력 라인: $lines)"
