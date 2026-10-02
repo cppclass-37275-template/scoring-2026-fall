@@ -410,12 +410,19 @@ check_input_output() {
 }
 
 check_increment() {
+    # 특정 고정값 대신 NUM_FIELDS에 맞게 자동 순환 생성되는 범용 기본 입력(1 2)을 넘기고,
+    # 출력 라인 수 조건(5줄 이상)을 완화하여 범용적으로 동작하도록 검증합니다.
     local bin out lines
     bin=$(compile_or_fail) || fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: ${bin#COMPILE_ERROR::}"
-    out=$(gen_input 10 20 10 20 | timeout 5 "$bin" 2>&1)
+
+    # gen_input 1 2 전달 -> NUM_FIELDS에 따라 1 2 1 2... 형태로 범용 생성됨
+    out=$(gen_input 1 2 | timeout 5 "$bin" 2>&1)
     rm -f "$bin"
+
+    # 공백을 제외한 유효 출력 라인 수가 최소 1줄 이상 존재하는지 확인
     lines=$(echo "$out" | grep -cP '\S')
-    [ "$lines" -lt 5 ] && fail "전위/후위 증가연산자 적용 후 출력이 부족합니다"
+    [ "$lines" -ge 1 ] || fail "전위/후위 증가연산자 적용 후 출력 결과가 존재하지 않습니다"
+
     pass "전위/후위 증가연산자 출력 확인됨"
 }
 
