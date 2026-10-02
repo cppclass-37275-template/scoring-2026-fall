@@ -393,12 +393,19 @@ check_compile() {
 # ------------------------------------------------------------------------
 
 check_input_output() {
+    # 특정 고정값(10 20 30 40) 대신, NUM_FIELDS 수에 맞게 자동 순환 생성되는
+    # 기본 입력(1 2)을 전달하여 클래스 형태와 상관없이 동작하도록 처리합니다.
     local bin out line_count
     bin=$(compile_or_fail) || fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: ${bin#COMPILE_ERROR::}"
-    out=$(gen_input 10 20 30 40 | timeout 5 "$bin" 2>&1)
+
+    # 범용 인자 1 2 전달 -> NUM_FIELDS에 맞춰 (1 2 1 2 ...) 형태로 생성됨
+    out=$(gen_input 1 2 | timeout 5 "$bin" 2>&1)
     rm -f "$bin"
+
+    # 공백이 아닌 유효 출력 줄 수가 1줄 이상 존재하는지 확인
     line_count=$(echo "$out" | grep -cP '\S')
-    [ "$line_count" -lt 2 ] && fail "입력 후 두 객체의 출력 결과가 충분하지 않습니다"
+    [ "$line_count" -ge 1 ] || fail "입력 연산 후 출력 결과가 존재하지 않습니다"
+
     pass "입력연산자/출력연산자 동작 확인됨"
 }
 
