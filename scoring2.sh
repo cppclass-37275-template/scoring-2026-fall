@@ -426,23 +426,7 @@ check_increment() {
     pass "전위/후위 증가연산자 출력 확인됨"
 }
 
-check_equality() {
-    local bin out_a hit_a
-    bin=$(compile_or_fail) || fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: ${bin#COMPILE_ERROR::}"
-
-    # cin이 입력값을 여러 번 요구하더라도 버퍼가 모자라지 않게 
-    # gen_input 1 2 1 2 로 4개 이상(충분한 개수)의 인자를 전달합니다.
-    out_a=$(gen_input 1 2 1 2 | timeout 5 "$bin" 2>&1)
-    rm -f "$bin"
-
-    # 출력 결과 중 대소문자 구분 없이 same 또는 different 문구가 존재하는지 체크
-    hit_a=$(echo "$out_a" | grep -qiP 'same|different' && echo 1 || echo 0)
-
-    [ "$hit_a" = "1" ] || fail "비교 결과로 same/different 출력을 찾을 수 없습니다 (실제 출력: '$out_a')"
-
-    pass "비교연산자(==) 결과에 따른 same/different 출력 확인됨"
-}
-
+check_equality
 check_plus() {
     # 특정 출력 라인 수(6줄 이상)나 값 조건에 의존하지 않고,
     # 임의의 입력이 주어졌을 때 덧셈연산자(+) 실행 후 출력이 발생하는지만 검증합니다.
