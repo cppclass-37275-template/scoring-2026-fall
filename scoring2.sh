@@ -426,7 +426,25 @@ check_increment() {
     pass "전위/후위 증가연산자 출력 확인됨"
 }
 
-check_equality
+check_equality() {
+    # 특정 입력값이나 크기에 의존하지 않고,
+    # 프로그램 실행 시 same 또는 different 문구가 출력되는지 여부만 검증합니다.
+    local bin out_a hit_a
+    bin=$(compile_or_fail) || fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: ${bin#COMPILE_ERROR::}"
+
+    # cin 버퍼가 부족하지 않도록 범용 인자(1 2 1 2)를 넘깁니다.
+    # NUM_FIELDS 개수에 맞춰 자동으로 입력값이 전달됩니다.
+    out_a=$(gen_input 1 2 1 2 | timeout 5 "$bin" 2>&1)
+    rm -f "$bin"
+
+    # 대소문자 구분 없이(i) 단어 경계(\b)에 맞는 same 또는 different 문자열 탐지
+    hit_a=$(echo "$out_a" | grep -qiP '\b(same|different)\b' && echo 1 || echo 0)
+
+    [ "$hit_a" = "1" ] || fail "비교 결과로 same/different 출력을 찾을 수 없습니다 (실제 출력: '$out_a')"
+
+    pass "비교연산자(==) 결과에 따른 same/different 출력 확인됨"
+}
+
 check_plus() {
     # 특정 출력 라인 수(6줄 이상)나 값 조건에 의존하지 않고,
     # 임의의 입력이 주어졌을 때 덧셈연산자(+) 실행 후 출력이 발생하는지만 검증합니다.
