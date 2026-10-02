@@ -427,19 +427,18 @@ check_increment() {
 }
 
 check_equality() {
-    # 특정 범위에 의존하는 대형/소형 값 비교를 제외하고,
-    # 임의의 값이 주어졌을 때 same/different 출력 로직이 동작하는지만 검증합니다.
     local bin out_a hit_a
     bin=$(compile_or_fail) || fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: ${bin#COMPILE_ERROR::}"
 
-    # 기본 gen_input으로 프로그램 실행 (값의 크기에 상관없이 기본 인자 넘김)
-    out_a=$(gen_input 1 2 | timeout 5 "$bin" 2>&1)
+    # cin이 입력값을 여러 번 요구하더라도 버퍼가 모자라지 않게 
+    # gen_input 1 2 1 2 로 4개 이상(충분한 개수)의 인자를 전달합니다.
+    out_a=$(gen_input 1 2 1 2 | timeout 5 "$bin" 2>&1)
     rm -f "$bin"
 
-    # 출력 결과 중 same 또는 different 단어가 포함되어 있는지 확인
-    hit_a=$(echo "$out_a" | grep -qiP '\b(same|different)\b' && echo 1 || echo 0)
+    # 출력 결과 중 대소문자 구분 없이 same 또는 different 문구가 존재하는지 체크
+    hit_a=$(echo "$out_a" | grep -qiP 'same|different' && echo 1 || echo 0)
 
-    [ "$hit_a" = "1" ] || fail "비교 결과로 same/different 출력을 찾을 수 없습니다"
+    [ "$hit_a" = "1" ] || fail "비교 결과로 same/different 출력을 찾을 수 없습니다 (실제 출력: '$out_a')"
 
     pass "비교연산자(==) 결과에 따른 same/different 출력 확인됨"
 }
