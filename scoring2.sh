@@ -177,7 +177,7 @@ gen_smart_input() {
 
     # 클래스1 이름이 'student'인 경우 7자리 학번 형태 입력
     if [ "$c1class" = "student" ]; then
-        gen_input 1234567 1
+        gen_input 1234567 1 'A'
     else
         # 그 외 클래스인 경우 기존처럼 범용 기본값(1 2) 사용
         gen_input 1 2
