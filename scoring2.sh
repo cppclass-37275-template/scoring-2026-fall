@@ -170,7 +170,19 @@ gen_input() {
     done
     echo "$out"
 }
+# 클래스1 이름에 따라 동적 인자를 결정을 한 뒤 gen_input을 호출하는 함수
+gen_smart_input() {
+    local c1class
+    c1class=$(detect_class_name "$H1" 2>/dev/null | tr '[:upper:]' '[:lower:]')
 
+    # 클래스1 이름이 'student'인 경우 7자리 학번 형태 입력
+    if [ "$c1class" = "student" ]; then
+        gen_input 1234567 1
+    else
+        # 그 외 클래스인 경우 기존처럼 범용 기본값(1 2) 사용
+        gen_input 1 2
+    fi
+}
 # ------------------------------------------------------------------------
 # 정적 구조 체크 (1점씩)
 # ------------------------------------------------------------------------
@@ -425,19 +437,7 @@ check_increment() {
 
     pass "전위/후위 증가연산자 출력 확인됨"
 }
-# 클래스1 이름에 따라 동적 인자를 결정을 한 뒤 gen_input을 호출하는 함수
-gen_smart_input() {
-    local c1class
-    c1class=$(detect_class_name "$H1" 2>/dev/null | tr '[:upper:]' '[:lower:]')
 
-    # 클래스1 이름이 'student'인 경우 7자리 학번 형태 입력
-    if [ "$c1class" = "student" ]; then
-        gen_input 1234567 2026001
-    else
-        # 그 외 클래스인 경우 기존처럼 범용 기본값(1 2) 사용
-        gen_input 1 2
-    fi
-}
 check_equality() {
     local bin out_a hit_a
     bin=$(compile_or_fail) || fail "컴파일 실패로 런타임 테스트를 진행할 수 없습니다: ${bin#COMPILE_ERROR::}"
