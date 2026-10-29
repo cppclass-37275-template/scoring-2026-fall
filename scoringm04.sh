@@ -156,8 +156,8 @@ fi
 
 ADD=$(fn_text "$GS" '\baddBook\s*\([^)]*\)')
 chk 1 "addBook: 매개변수 const book&"                         rxs "$ADD" '\baddBook\s*\(\s*const\s+(?:\w+::)*book\s*&\s*\w*\s*\)'
-chk 2 "addBook: n >= max 이면 프로그램 종료"                  rxs "$ADD" "\\bif\\s*\\(\\s*(?:$NAMEN\\s*>=\\s*$MAXN|$MAXN\\s*<=\\s*$NAMEN|$NAMEN\\s*>\\s*(?:max|maxBook)\\s*-\\s*1)\\s*\\)\\s*\\{?[^{}]*?\\b(?:exit|abort|quick_exit|terminate)\\s*\\("
-chk 2 "addBook: bookList[n] 에 매개변수 할당"                 rxs "$ADD" "\\baddBook\\s*\\(\\s*const\\s+(?:\\w+::)*book\\s*&\\s*(\\w+)\\s*\\)[\\s\\S]*?\\bbookList\\s*(?:\\[\\s*$NAMEN\\s*\\]|\\.at\\s*\\(\\s*$NAMEN\\s*\\))\\s*=\\s*\\1\\b"
+#chk 2 "addBook: n >= max 이면 프로그램 종료"                  rxs "$ADD" "\\bif\\s*\\(\\s*(?:$NAMEN\\s*>=\\s*$MAXN|$MAXN\\s*<=\\s*$NAMEN|$NAMEN\\s*>\\s*(?:max|maxBook)\\s*-\\s*1)\\s*\\)\\s*\\{?[^{}]*?\\b(?:exit|abort|quick_exit|terminate)\\s*\\("
+chk 2 "addBook: n >= max 이면 프로그램 종료"                  rxs "$ADD" "\\bif\\s*\\(\\s*(?:$NAMEN\\s*>=\\s*$MAXN|$MAXN\\s*<=\\s*$NAMEN|$NAMEN\\s*>\\s*(?:max|maxBook)\\s*-\\s*1)\\s*\\)\\s*\\{?[^{}]*?\\b(?:exit|abort|quick_exit|terminate)\\s*\\("chk 2 "addBook: bookList[n] 에 매개변수 할당"                 rxs "$ADD" "\\baddBook\\s*\\(\\s*const\\s+(?:\\w+::)*book\\s*&\\s*(\\w+)\\s*\\)[\\s\\S]*?\\bbookList\\s*(?:\\[\\s*$NAMEN\\s*\\]|\\.at\\s*\\(\\s*$NAMEN\\s*\\))\\s*=\\s*\\1\\b"
 chk 1 "addBook: n 을 1 증가"                                  rxs "$ADD" "(?:\\+\\+\\s*$NAMEN\\b|\\b$NAMEN\\s*\\+\\+|\\b$NAMEN\\s*\\+=\\s*1\\b|\\b$NAMEN\\s*=\\s*$NAMEN\\s*\\+\\s*1\\b)"
 
 PR=$(fn_text "$GS" '\bprint\s*\(\s*\)')
